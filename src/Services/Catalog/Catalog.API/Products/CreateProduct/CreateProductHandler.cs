@@ -1,11 +1,8 @@
-﻿using BuildingBlocks.CQRS;
-using Catalog.API.Models;
-
-namespace Catalog.API.Products.CreateProduct
+﻿namespace Catalog.API.Products.CreateProduct
 {
     public record CreateProductCommand(string Name, List<string> Category, string Description, string ImageFile, decimal Price):ICommand<CreateProductResult>;
     public record CreateProductResult(Guid Id);
-    internal class CreateProductCommandHandler : ICommandHandler<CreateProductCommand, CreateProductResult>
+    internal class CreateProductCommandHandler(IDocumentSession session) : ICommandHandler<CreateProductCommand, CreateProductResult>
     {
         public async Task<CreateProductResult> Handle(CreateProductCommand command, CancellationToken cancellationToken)
         {
@@ -18,11 +15,12 @@ namespace Catalog.API.Products.CreateProduct
                 ImageFile = command.ImageFile,
                 Price = command.Price
             };
-            // Here you would typically save the product to a database and return the created product's ID.
-            // For now, we will just return a new Guid as a placeholder.
+
+            session.Store(product);
+            await session.SaveChangesAsync(cancellationToken);
 
 
-            return new CreateProductResult(Guid.NewGuid());
+            return new CreateProductResult(product.Id);
         }
     }
 }
